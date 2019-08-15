@@ -1,10 +1,15 @@
+#!/usr/bin/env node
 // ----------------------------------------------------------------------------
+
+// core
+const fs = require('fs')
 
 // npm
 const debug = require('debug')('ardash')
 const mqtt = require('mqtt')
 const ms = require('ms')
 const fmt = require('fmt')
+const ini = require('ini')
 
 // local
 const moon = require('./lib/plugin/moon.js')
@@ -13,22 +18,47 @@ const datetime = require('./lib/plugin/datetime.js')
 // ----------------------------------------------------------------------------
 // setup
 
+const plugin = {
+  moon,
+  datetime,
+}
+
 const client  = mqtt.connect()
 
+const config = ini.parse(fs.readFileSync('./ardash.ini', 'utf-8'))
+const pages = []
+
+Object.keys(config).forEach((title, pageNum) => {
+  const section = config[title]
+  if (!(section.plugin in plugin)) {
+    console.warn(`Unknown plugin '${section.plugin}' in section '${title}'`)
+    process.exit(2)
+  }
+
+  const opts = Object.assign({}, section)
+  delete opts.plugin
+
+  pages.push({
+    title,
+    plugin: section.plugin,
+    opts,
+  })
+})
+
 async function setup() {
+  const setups = pages.map(page => {
+    return plugin[page.plugin].setup(page.opts)
+  })
+
   // call all plugin `setup()` functions
-  await Promise.all([
-    moon.setup(),
-    datetime.setup(),
-  ])
+  await Promise.all(setups).catch(err => {
+    console.warn(err)
+    process.exit(2)
+  })
 }
 
-function errorHandler(err) {
-  console.warn(err)
-}
-
-function publish(name, channel, lines) {
-  fmt.msg(`${name}:`)
+function publish(title, plugin, channel, lines) {
+  fmt.msg(`${title} (${plugin}):`)
   for(let i=0; i<lines.length; i++) {
     fmt.li(lines[i])
   }
@@ -38,27 +68,31 @@ function publish(name, channel, lines) {
 function go() {
   fmt.title((new Date()).toISOString())
 
-  // now all the plugins
-  datetime.go().then(lines => {
-    publish('DateTime', 1, lines)
-  }).catch(err => errorHandler)
+  const promises = pages.map((page, pageNum) => {
+    return plugin[page.plugin].go(page.opts).then(lines => {
+      publish(page.title, page.plugin, pageNum, lines)
+    })
+  })
 
-  moon.go().then(lines => {
-    publish('Moon', 2, lines)
-  }).catch(err => errorHandler)
+  Promise.all(promises).then(() => {
+    fmt.msg('')
+  }).catch(err => {
+    console.warn(err)
+  })
 }
 
 // ----------------------------------------------------------------------------
 // main
 
-console.log('')
-console.log('       _            _           _     ')
-console.log('      / \\   _ __ __| | __ _ ___| |__  ')
-console.log("     / _ \\ | '__/ _` |/ _` / __| '_ \\ ")
-console.log('    / ___ \\| | | (_| | (_| \\__ \\ | | |')
-console.log('   /_/   \\_\\_|  \\__,_|\\__,_|___/_| |_|')
-console.log('')
-console.log('')
+fmt.line()
+fmt.msg('')
+fmt.msg('       _            _           _     ')
+fmt.msg('      / \\   _ __ __| | __ _ ___| |__  ')
+fmt.msg("     / _ \\ | '__/ _` |/ _` / __| '_ \\ ")
+fmt.msg('    / ___ \\| | | (_| | (_| \\__ \\ | | |')
+fmt.msg('   /_/   \\_\\_|  \\__,_|\\__,_|___/_| |_|')
+fmt.msg('')
+fmt.msg('')
 
 ;(async () => {
 

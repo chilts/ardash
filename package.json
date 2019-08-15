@@ -1,19 +1,19 @@
 {
   "name": "ardash",
-  "version": "1.0.0",
-  "description": "",
-  "main": "ardash.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "version": "0.4.0",
+  "description": "Simple dashboard using an Arduino with a display, and a computer like a Raspberry Pi to send it information.",
+  "bin": {
+    "ardash": "./ardash.js"
   },
-  "author": "",
-  "license": "ISC",
   "dependencies": {
     "date-fns": "^1.30.1",
     "debug": "^4.1.1",
     "fmt": "^1.2.0",
+    "ini": "^1.3.5",
     "lune": "^0.4.0",
     "mqtt": "^3.0.0",
     "ms": "^2.1.2"
-  }
+  },
+  "author": "Andrew Chilton (https://chilts.org/) <andychilton@gmail.com>",
+  "license": "ISC"
 }
