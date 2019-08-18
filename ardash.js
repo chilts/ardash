@@ -14,6 +14,7 @@ const ini = require('ini')
 // local
 const moon = require('./lib/plugin/moon.js')
 const datetime = require('./lib/plugin/datetime.js')
+const anniversary = require('./lib/plugin/anniversary.js')
 
 // ----------------------------------------------------------------------------
 // setup
@@ -21,6 +22,7 @@ const datetime = require('./lib/plugin/datetime.js')
 const plugin = {
   moon,
   datetime,
+  anniversary,
 }
 
 const client  = mqtt.connect()
@@ -47,7 +49,7 @@ Object.keys(config).forEach((title, pageNum) => {
 
 async function setup() {
   const setups = pages.map(page => {
-    return plugin[page.plugin].setup(page.opts)
+    return plugin[page.plugin].setup(page)
   })
 
   // call all plugin `setup()` functions
@@ -69,7 +71,7 @@ function go() {
   fmt.title((new Date()).toISOString())
 
   const promises = pages.map((page, pageNum) => {
-    return plugin[page.plugin].go(page.opts).then(lines => {
+    return plugin[page.plugin].go(page).then(lines => {
       publish(page.title, page.plugin, pageNum, lines)
     })
   })
@@ -85,13 +87,11 @@ function go() {
 // main
 
 fmt.line()
-fmt.msg('')
 fmt.msg('       _            _           _     ')
 fmt.msg('      / \\   _ __ __| | __ _ ___| |__  ')
 fmt.msg("     / _ \\ | '__/ _` |/ _` / __| '_ \\ ")
 fmt.msg('    / ___ \\| | | (_| | (_| \\__ \\ | | |')
 fmt.msg('   /_/   \\_\\_|  \\__,_|\\__,_|___/_| |_|')
-fmt.msg('')
 fmt.msg('')
 
 ;(async () => {
