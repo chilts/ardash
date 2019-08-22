@@ -15,6 +15,7 @@ const ini = require('ini')
 const moon = require('./lib/plugin/moon.js')
 const datetime = require('./lib/plugin/datetime.js')
 const anniversary = require('./lib/plugin/anniversary.js')
+const sun = require('./lib/plugin/sun.js')
 
 // ----------------------------------------------------------------------------
 // setup
@@ -23,6 +24,7 @@ const plugin = {
   moon,
   datetime,
   anniversary,
+  sun,
 }
 
 const client  = mqtt.connect()
